@@ -16,7 +16,6 @@ import os
 from astropy.stats import mad_std
 
 import ccdproc as ccdp
-import matplotlib.pyplot as plt
 import numpy as np
 
 from convenience_functions import show_image
@@ -25,11 +24,7 @@ from convenience_functions import show_image
 #plt.style.use('guide.mplstyle')
 
 from astropy.nddata import CCDData
-from astropy.visualization import hist
 
-import numpy as np
-
-from convenience_functions import show_image
 
 one_flats = CCDData.read('flat/metis_f.00003512.Entered Coordinates.FlatField.fits', unit='adu')
 one_flats_fin = CCDData.read('flat/metis_f.00003547.Entered Coordinates.FlatField.fits', unit='adu')
@@ -49,27 +44,36 @@ reduced_images = ccdp.ImageFileCollection(calibrated_path)
 calibrated_biases = []
 
 calibrated_biases = os.listdir('flat')
-files = []
+B_image = []
+V_image = []
+Ic_image = []
 
 for image in calibrated_biases:
-    files.append(CCDData.read("flat/"+image, unit='adu'))
+    fit = CCDData.read("flat/"+image, unit='adu')    
+
+    if(fit[0].header["FILTER"] == "B"):        
+        B_image.append(fit)
+    elif(fit[0].header["FILTER"] == "V"):
+        V_image.append(fit)
+    else:
+        Ic_image.append(fit)
+    
+images = [B_image,V_image, Ic_image]
+
+def inv_median(a):
+    return 1 / np.median(a)
 
 
-# combined_bias = ccdp.combine(files,
-#                              method='average',
-#                              sigma_clip=True, sigma_clip_low_thresh=5, sigma_clip_high_thresh=5,
-#                              sigma_clip_func=np.ma.median, sigma_clip_dev_func=mad_std,
-#                              mem_limit=350e6
-#                             )
+for filte in images:
+    combined_flat = ccdp.combine(filte,
+                                 method='average', scale=inv_median,
+                                 sigma_clip=True, sigma_clip_low_thresh=5, sigma_clip_high_thresh=5,
+                                 sigma_clip_func=np.ma.median, signma_clip_dev_func=mad_std,
+                                 mem_limit=350e6
+                                )
 
-# combined_bias.meta['combined'] = True
+    combined_flat.meta['combined'] = True
+    dark_file_name = 'combined_flat_filter_'+filte[1][0].header["FILTER"] +'.fit'
+    combined_flat.write(dark_file_name, overwrite = True)
 
-# combined_bias.write(calibrated_path / 'combined_bias.fit')
 
-
-# fig, (ax_1_bias, ax_avg_bias) = plt.subplots(1, 2, figsize=(30, 15))
-
-# show_image(one_bias.data, cmap='gray', ax=ax_1_bias, fig=fig, input_ratio=8)
-# ax_1_bias.set_title('Single bias image')
-# show_image(combined_bias.data, cmap='gray', ax=ax_avg_bias, fig=fig, input_ratio=8)
-# ax_avg_bias.set_title('100 bias images combined');
