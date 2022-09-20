@@ -4,6 +4,7 @@
 ## Combine
 
 De la jornada de observacion se obtuvieron las imagenes de calibracion para realizar la reduccion del ruido.
-Se tomaron 10 images de cada tipo y seran conbinadas con el archivo 
+Se tomaron 12 images de cada tipo (Cuando es necesario, 12 por cada filtro). Estas se combinan con el archivo Combine*..*.fit en cada caso. 
 
-> Combine.py
+finalmente se obtienen las imagenes de calibracion que podran ser encontrados en cada una de las carpetas correspondinte.
+
